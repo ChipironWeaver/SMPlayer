@@ -21,7 +21,6 @@ public class PlayerDamageSource : MonoBehaviour
     public void Start()
     {
         _parent = transform.parent.gameObject;
-        CurrentDamageInfo = BaseDamageInfo;
         _hitBlackList.Add(_parent);
     }
 
@@ -43,11 +42,15 @@ public class PlayerDamageSource : MonoBehaviour
                     {
                         Damage = CurrentDamageInfo.Damage,
                         KnockbackStrength =  CurrentDamageInfo.Damage,
-                        Knockback =  collision.gameObject.transform.position - _parent.transform.position
+                        Knockback = CurrentDamageInfo.Knockback * 
+                                    new Vector2(Mathf.Sign(_parent.transform.position.x - 
+                                                           collision.transform.position.x) * -1,1) ,
                     };
-                    newDamageInfo.Knockback += CurrentDamageInfo.Knockback;
+                    
                     if (playerHealthController.TakeDamage(newDamageInfo))
                     {
+                        
+                        
                         OnHit.Invoke();
                     }
                     else

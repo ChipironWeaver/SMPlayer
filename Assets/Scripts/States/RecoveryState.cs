@@ -4,7 +4,7 @@ namespace States
 {
     public class RecoveryState : State
     {
-        public RecoveryState(GameObject host, float duration = 0.25f) : base(host, duration) { }
+        public RecoveryState(GameObject host, float duration = 0.1f) : base(host, duration) { }
 
         public override void OnEnter()
         {

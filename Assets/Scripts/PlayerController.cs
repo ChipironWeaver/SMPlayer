@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using NaughtyAttributes;
 using States;
 using TMPro;
+using UnityEditor.Animations;
 using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D),
     typeof(SpriteRenderer),
@@ -12,7 +14,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _speed;
     [SerializeField] private float _airControl;
     [SerializeField] private float _jumpForce;
-    
+    [SerializeField,Expandable] private List<ComboAction> _comboActions;
     [SerializeField] private PolygonCollider2D _hurtBox;
     [Header("Ground Check")]
     [SerializeField] private float _groundCheckDistance;
@@ -29,12 +31,17 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer _spriteRenderer;
     private State _currentState;
     private InputController _inputController;
+    private PlayerDamageSource _playerDamageSource;
     private Sprite _lastSprite;
     private readonly List<Vector2> _points = new();
     private float _lastMoveX;
+    private RuntimeAnimatorController _baseAnimatorController;
+    private int _currentComboIndex;
     
     public Rigidbody2D Rigidbody2D => _rigidbody2D;
     public SpriteRenderer SpriteRenderer => _spriteRenderer;
+    public PlayerDamageSource PlayerDamageSource => _playerDamageSource;
+    public RuntimeAnimatorController BaseAnimatorController => _baseAnimatorController;
     public float Speed => _speed;
     public float JumpForce => _jumpForce;
     public float AirControl => _airControl;
@@ -54,7 +61,8 @@ public class PlayerController : MonoBehaviour
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _inputController = GetComponent<InputController>();
         _healthController = GetComponent<PlayerHealthController>();
-        
+        _playerDamageSource = _hurtBox.gameObject.GetComponent<PlayerDamageSource>();
+        _baseAnimatorController = GetComponent<Animator>().runtimeAnimatorController ;
         _healthController.OnDamage.AddListener(OnDamage);
         _healthController.OnDeath.AddListener(OnDeath);
         SwitchState(new IdleState(gameObject));
@@ -63,6 +71,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnDamage(DamageInfo damageInfo)
     {
+        Debug.Log($"first : {damageInfo.Knockback} boom {damageInfo.Knockback.normalized}");
         _rigidbody2D.AddForce(damageInfo.Knockback.normalized * damageInfo.KnockbackStrength, ForceMode2D.Impulse);
         SwitchState(new StunState(gameObject));
     }
@@ -93,9 +102,19 @@ public class PlayerController : MonoBehaviour
         {
             SwitchState(new IdleState(gameObject));
         }
-        if (_currentState is AttackState && _currentState.IsFinished)  // AIR -> base
+        if (_currentState is AttackState && _currentState.IsFinished)  // ATK -> base
         {
-            SwitchState(new MoveState(gameObject));
+            SwitchState(new RecoveryState(gameObject));
+        }
+        if (_currentState is RecoveryState && _currentState.IsFinished)  // ATK -> base
+        {
+            if (_inputController.IsAttacking.Value)
+            {
+                _currentComboIndex ++;
+                if (_currentComboIndex >= _comboActions.Count) _currentComboIndex = 0;
+                SwitchState(new AttackState(gameObject,_comboActions[_currentComboIndex]));
+            }
+            else SwitchState(new MoveState(gameObject));
         }
         if (_currentState is LandingState && _currentState.IsFinished)  // Land -> base
         {
@@ -125,11 +144,13 @@ public class PlayerController : MonoBehaviour
         {
             SwitchState(new LandingState(gameObject));
         }
-
+        
         if (_currentState is MoveState or IdleState && _inputController.IsAttacking.Value) 
         {
-            SwitchState(new AttackState(gameObject));
+            SwitchState(new AttackState(gameObject,_comboActions[0]));
+            _currentComboIndex = 0;
         }
+        
         if (_currentState is MoveState or IdleState && !IsGrounded) 
         {
             SwitchState(new AirbornState(gameObject, 0.5f));

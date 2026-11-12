@@ -167,6 +167,11 @@ MonoBehaviour:
   _speed: 5
   _airControl: 5
   _jumpForce: 5
+  _comboActions:
+  - {fileID: 11400000, guid: c33814b45ad9f47448f3cb639dd1b835, type: 2}
+  - {fileID: 11400000, guid: ae88a9422401ab546b72243370065d37, type: 2}
+  - {fileID: 11400000, guid: 570475069c346c041af25ad5435f9f27, type: 2}
+  - {fileID: 11400000, guid: 8b5d9fe7178e666429a01f7e0c6b3439, type: 2}
   _hurtBox: {fileID: 8652411099278993215}
   _groundCheckDistance: 0.1
   _groundCheckSize: {x: 0.6, y: 0.15}

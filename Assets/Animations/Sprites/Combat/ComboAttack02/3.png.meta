@@ -54,7 +54,7 @@ TextureImporter:
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationMethod: 0
-  spriteTessellationDetail: -1
+  spriteTessellationDetail: 0
   spriteGeometrySubdivision: -1
   textureType: 8
   textureShape: 1
@@ -126,10 +126,18 @@ TextureImporter:
     sprites: []
     outline: []
     customData: 
-    physicsShape: []
+    physicsShape:
+    - - {x: -2, y: -5}
+      - {x: 6, y: -2}
+      - {x: 12, y: -7}
+      - {x: 13, y: -13}
+      - {x: 38, y: -13}
+      - {x: 31, y: 9}
+      - {x: 9, y: 19}
+      - {x: -11, y: 14}
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []

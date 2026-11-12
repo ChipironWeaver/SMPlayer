@@ -30,11 +30,15 @@ public class PlayerHealthController : MonoBehaviour
         if (Invulnerable) return true;
         
         _currentHealth -= damageInfo.Damage;
-        OnDamage?.Invoke(damageInfo);
+        
         
         if (_currentHealth <= 0)
         {
             Death();
+        }
+        else
+        {
+            OnDamage?.Invoke(damageInfo);
         }
         return true;
     }
