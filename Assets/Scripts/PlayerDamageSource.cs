@@ -13,7 +13,7 @@ public class PlayerDamageSource : MonoBehaviour
 
     public DamageInfo CurrentDamageInfo;
     public UnityEvent OnHit;
-    public UnityEvent OnBlockedHit;
+    public UnityEvent<float> OnBlockedHit;
     
     private GameObject _parent;
     private List<GameObject> _hitBlackList = new();
@@ -55,7 +55,7 @@ public class PlayerDamageSource : MonoBehaviour
                     }
                     else
                     {
-                        OnBlockedHit.Invoke();
+                        OnBlockedHit.Invoke(Mathf.Sign(_parent.transform.position.x - collision.transform.position.x) * -1);
                     }
                     _hitBlackList.Add(collision.gameObject);
                 }

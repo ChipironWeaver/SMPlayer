@@ -37,11 +37,13 @@ public class PlayerController : MonoBehaviour
     private float _lastMoveX;
     private RuntimeAnimatorController _baseAnimatorController;
     private int _currentComboIndex;
+    private PlayerHealthController _playerHealthController;
     
     public Rigidbody2D Rigidbody2D => _rigidbody2D;
     public SpriteRenderer SpriteRenderer => _spriteRenderer;
     public PlayerDamageSource PlayerDamageSource => _playerDamageSource;
     public RuntimeAnimatorController BaseAnimatorController => _baseAnimatorController;
+    public PlayerHealthController PlayerHealthController => _playerHealthController;
     public float Speed => _speed;
     public float JumpForce => _jumpForce;
     public float AirControl => _airControl;
@@ -63,8 +65,12 @@ public class PlayerController : MonoBehaviour
         _healthController = GetComponent<PlayerHealthController>();
         _playerDamageSource = _hurtBox.gameObject.GetComponent<PlayerDamageSource>();
         _baseAnimatorController = GetComponent<Animator>().runtimeAnimatorController ;
+        _playerHealthController = GetComponent<PlayerHealthController>();
+        
         _healthController.OnDamage.AddListener(OnDamage);
         _healthController.OnDeath.AddListener(OnDeath);
+        _playerDamageSource.OnBlockedHit.AddListener(OnBlockHit);
+        
         SwitchState(new IdleState(gameObject));
         
     }
@@ -73,13 +79,19 @@ public class PlayerController : MonoBehaviour
     {
         Debug.Log($"first : {damageInfo.Knockback} boom {damageInfo.Knockback.normalized}");
         _rigidbody2D.AddForce(damageInfo.Knockback.normalized * damageInfo.KnockbackStrength, ForceMode2D.Impulse);
-        SwitchState(new StunState(gameObject));
+        SwitchState(new StunState(gameObject,Color.red));
     }
 
     public void OnDeath()
     {
         SwitchState(new KoState(gameObject));
         Debug.Log($"maaaaannnnn im dead asf, said {name}");
+    }
+
+    public void OnBlockHit(float direction)
+    {
+        SwitchState(new StunState(gameObject,Color.cornflowerBlue));
+        _rigidbody2D.AddForce(new Vector2(3 * direction * -1 , 3), ForceMode2D.Impulse);
     }
     
     private void Update() 
@@ -99,6 +111,10 @@ public class PlayerController : MonoBehaviour
     private void DoStateLogic()
     {
         if (_currentState is StunState && _currentState.IsFinished)
+        {
+            SwitchState(new IdleState(gameObject));
+        }
+        if (_currentState is BlockState && _currentState.IsFinished)
         {
             SwitchState(new IdleState(gameObject));
         }
@@ -149,6 +165,10 @@ public class PlayerController : MonoBehaviour
         {
             SwitchState(new AttackState(gameObject,_comboActions[0]));
             _currentComboIndex = 0;
+        }
+        if (_currentState is MoveState or IdleState && _inputController.IsBlocking.Value) 
+        {
+            SwitchState(new BlockState(gameObject));
         }
         
         if (_currentState is MoveState or IdleState && !IsGrounded) 

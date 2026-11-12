@@ -13,7 +13,7 @@ public class PlayerHealthController : MonoBehaviour
     public UnityEvent<DamageInfo> OnDamage = new();
     public UnityEvent OnDeath = new();
     [FormerlySerializedAs("CanTakeDamage")] public bool Invulnerable;
-    public bool IsShielded;
+    [FormerlySerializedAs("IsShielded")] public bool IsBlocking;
 
     public void Start()
     {
@@ -22,7 +22,7 @@ public class PlayerHealthController : MonoBehaviour
 
     public bool TakeDamage(DamageInfo damageInfo)
     {
-        if (IsShielded)
+        if (IsBlocking)
         {
             return false;
         }

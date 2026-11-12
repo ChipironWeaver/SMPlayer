@@ -7,6 +7,7 @@ public class InputController : MonoBehaviour
         [ReadOnly] public Vector2 Move;
         public Trigger IsJumping;
         public Trigger IsAttacking;
+        public Trigger IsBlocking;
 
         public void OnMove(InputValue value) 
         {
@@ -21,5 +22,10 @@ public class InputController : MonoBehaviour
         public void OnAttack(InputValue value) 
         {
                 if (value.isPressed) IsAttacking.Launch();
+        }
+
+        public void OnBlock(InputValue value)
+        {
+                if (value.isPressed) IsBlocking.Launch();
         }
 }
