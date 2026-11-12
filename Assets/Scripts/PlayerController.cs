@@ -12,16 +12,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _speed;
     [SerializeField] private float _airControl;
     [SerializeField] private float _jumpForce;
-    [SerializeField] private float _groundCheckDistance;
-    [SerializeField] private LayerMask _groundLayer;
-    [SerializeField] private PolygonCollider2D _hurtBox;
     
+    [SerializeField] private PolygonCollider2D _hurtBox;
+    [Header("Ground Check")]
+    [SerializeField] private float _groundCheckDistance;
+
+    [SerializeField] private Vector2 _groundCheckSize;
+    [SerializeField] private LayerMask _groundLayer;
     [Header("Debug")]
     [SerializeField] private TextMeshProUGUI _debugStateText;
     [SerializeField] private TextMeshProUGUI _debugGroundedText;
     [SerializeField] private TextMeshProUGUI _debugJumpInputText;
     
     private Rigidbody2D _rigidbody2D;
+    private PlayerHealthController _healthController;
     private SpriteRenderer _spriteRenderer;
     private State _currentState;
     private InputController _inputController;
@@ -36,9 +40,10 @@ public class PlayerController : MonoBehaviour
     public float AirControl => _airControl;
     public bool IsGrounded 
     {
-        get 
+        get
         {
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, _groundCheckDistance, _groundLayer);
+            RaycastHit2D hit =
+                Physics2D.BoxCast(transform.position, _groundCheckSize, 0, Vector2.down, _groundCheckDistance, _groundLayer);
             return hit.collider;
         }
     }
@@ -48,10 +53,26 @@ public class PlayerController : MonoBehaviour
         _rigidbody2D = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _inputController = GetComponent<InputController>();
+        _healthController = GetComponent<PlayerHealthController>();
         
+        _healthController.OnDamage.AddListener(OnDamage);
+        _healthController.OnDeath.AddListener(OnDeath);
         SwitchState(new IdleState(gameObject));
+        
     }
 
+    public void OnDamage(DamageInfo damageInfo)
+    {
+        _rigidbody2D.AddForce(damageInfo.Knockback.normalized * damageInfo.KnockbackStrength, ForceMode2D.Impulse);
+        SwitchState(new StunState(gameObject));
+    }
+
+    public void OnDeath()
+    {
+        SwitchState(new KoState(gameObject));
+        Debug.Log($"maaaaannnnn im dead asf, said {name}");
+    }
+    
     private void Update() 
     {
         _currentState.OnUpdate();
@@ -68,13 +89,16 @@ public class PlayerController : MonoBehaviour
 
     private void DoStateLogic()
     {
+        if (_currentState is StunState && _currentState.IsFinished)
+        {
+            SwitchState(new IdleState(gameObject));
+        }
         if (_currentState is AttackState && _currentState.IsFinished)  // AIR -> base
         {
             SwitchState(new MoveState(gameObject));
         }
         if (_currentState is LandingState && _currentState.IsFinished)  // Land -> base
         {
-            Debug.Log($":3c {_currentState.GetType().Name}");
             SwitchState(new MoveState(gameObject));
         }
         if (_currentState is MoveState && _inputController.Move.x == 0)
@@ -104,7 +128,7 @@ public class PlayerController : MonoBehaviour
 
         if (_currentState is MoveState or IdleState && _inputController.IsAttacking.Value) 
         {
-            SwitchState(new AttackState(gameObject, 0.5f));
+            SwitchState(new AttackState(gameObject));
         }
         if (_currentState is MoveState or IdleState && !IsGrounded) 
         {
@@ -115,7 +139,7 @@ public class PlayerController : MonoBehaviour
     private void SwitchState(State state)
     {
         if (state == _currentState) return;
-        Debug.Log($"Switching to {state.GetType().Name}");
+        //Debug.Log($"Switching to {state.GetType().Name}");
         _currentState?.OnExit();
         _currentState = state;
         _currentState?.OnEnter();
@@ -127,13 +151,13 @@ public class PlayerController : MonoBehaviour
     {
         _hurtBoxActive = true;
         _lastSprite = null;
-        _hurtBox.enabled = true;
+        _hurtBox.gameObject.SetActive(true);
     }
 
     public void OnAttackFinished() 
     {
         _hurtBoxActive = false;
-        _hurtBox.enabled = false;
+        _hurtBox.gameObject.SetActive(false);
     }
 
     private void LateUpdate() 
