@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using NaughtyAttributes;
 using States;
 using TMPro;
-using UnityEditor.Animations;
 using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D),
     typeof(SpriteRenderer),
